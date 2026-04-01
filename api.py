@@ -1,0 +1,63 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import json
+
+# Import your custom AI agents
+from agent_research import extract_facts
+from agent_copywriter import generate_drafts
+from agent_editor import review_drafts
+
+app = FastAPI()
+
+# Allow the Vite frontend (port 5173) to communicate with this backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Define what data the frontend will send us
+class CampaignRequest(BaseModel):
+    source_text: str
+    tone: str
+
+# Create the web endpoint
+@app.post("/generate")
+def generate_campaign(request: CampaignRequest):
+    print("🚀 Received request from frontend!")
+    
+    # --- Agent 1 ---
+    print("Agent 1: Extracting facts...")
+    fact_sheet_json = extract_facts(request.source_text)
+    
+    # --- The Feedback Loop ---
+    is_approved = False
+    attempt_count = 1
+    max_attempts = 3
+    final_drafts = ""
+    
+    while not is_approved and attempt_count <= max_attempts:
+        print(f"Agent 2: Drafting (Attempt {attempt_count})...")
+        drafts_json = generate_drafts(fact_sheet_json, request.tone)
+        
+        print("Agent 3: Reviewing...")
+        editor_response = review_drafts(fact_sheet_json, drafts_json)
+        editor_decision = json.loads(editor_response)
+        
+        if editor_decision.get("is_approved"):
+            print("✅ Approved!")
+            is_approved = True
+            final_drafts = drafts_json
+            break
+        else:
+            print(f"❌ Rejected: {editor_decision.get('feedback_notes')}")
+            attempt_count += 1
+            
+    if is_approved:
+        # Send the successful JSON back to the React frontend
+        return {"status": "success", "data": json.loads(final_drafts)}
+    else:
+        return {"status": "failed", "message": "Editor rejected all attempts."}
