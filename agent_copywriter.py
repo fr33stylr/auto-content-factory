@@ -18,17 +18,16 @@ def generate_drafts(fact_sheet_json: str, tone: str) -> str:
     
     # 1. The Persona (Notice how we inject the 'tone' variable dynamically)
     system_instruction = f"""
-    You are the "Creative Copywriter" Agent. Your role is the "Voice."
+    You are the "Creative Copywriter" Agent. 
     You will receive a strict JSON Fact-Sheet. You must use ONLY the facts provided in this sheet.
+    Ensure the specific "Value Proposition" from the Fact-Sheet is the central hero of every piece.
     
-    Your writing style and tone MUST BE: {tone}.
+    The user requested an overall campaign vibe of: '{tone}'.
     
-    Your exact requirements:
-    1. Produce a compelling Blog Post.
-    2. Produce a 5-post Social Media Thread.
-    3. Produce a 1-paragraph Email Teaser.
-    
-    Ensure the specific "Value Proposition" from the Fact-Sheet is the hero of every piece.
+    However, you MUST switch your tone and length appropriately for each specific format:
+    1. blog_post: Write exactly a 500-word article. The tone must be Professional, informative, and authoritative.
+    2. social_thread: Write exactly 5 posts. The tone must be Punchy, engaging, and highly energetic for platforms like Twitter/LinkedIn.
+    3. email_teaser: Write exactly 1 paragraph. The tone must be an urgent, compelling teaser that drives clicks.
     """
 
     # 2. The API Call
