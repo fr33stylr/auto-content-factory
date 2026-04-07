@@ -4,34 +4,22 @@
 
 @font-face {
   font-family: 'Outward';
-  src: url('./fonts/outward-borders-webfont.ttf') format('truetype');
+  src: url('./fonts/outward-borders-webfont.woff') format('woff');
   font-weight: normal;
   font-style: normal;
 }
 
-@font-face {
-  font-family: 'Outward';
-  src: url('./fonts/outward-round-webfont.woff') format('woff');
-  font-weight: normal;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Chillax';
-  src: url('./fonts/Chillax-Bold.woff') format('woff');
-  font-weight: bolder;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Chillax';
-  src: url('./fonts/Chillax-Semibold.woff') format('woff');
-  font-weight: bold;
-  font-style: normal;
-}
 
 @font-face {
   font-family:'Nippo';
   src: url('./fonts/Nippo-Bold.woff') format('woff');
   font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Melodrama';
+  src: url('./fonts/Melodrama-Semibold.woff') format('woff');
+  font-weight: normal;
   font-style: normal;
 }

@@ -25,14 +25,14 @@ def extract_facts(source_text: str) -> str:
     system_instruction = """
     You are the "Lead Research & Fact-Check Agent". Your role is the "Analytical Brain."
     Read the provided source material and extract the absolute truth.
-    Identify core product features, technical specifications, and the target audience.
-    If you find any statements that are vague or lack necessary detail, you MUST flag them in the ambiguities_flagged array. Do not invent missing information.
+    Identify the core offering, primary value proposition, target audience, and key features.
+    If you find any statements that are vague, lack necessary detail, or are missing crucial metrics (like price), you MUST flag them in the 'ambiguities_flagged' array. Do not invent missing information.
     """
 
     # 2. The API Call
-    # We use gemini-2.5-flash because it is lightning fast and great at extraction tasks.
+    # We use gemini-1.5-flash because it is lightning fast and great at extraction tasks.
     response = client.models.generate_content(
-        model='gemini-2.5-flash',
+        model='gemini-2.5-flash-lite',
         contents=source_text,
         config=types.GenerateContentConfig(
             system_instruction=system_instruction,
@@ -44,17 +44,4 @@ def extract_facts(source_text: str) -> str:
     )
     
     return response.text
-
-# A messy dummy document to test our agent
-dummy_raw_document = """
-We are excited to announce our new product, CloudSync Pro! It's going to revolutionize how enterprise accounting teams manage their data. It features real-time database mirroring and AES-256 encryption. We also have a collaborative dashboard. I think the price is going to be around $50 a month, but marketing hasn't finalized that yet. It also has an automated backup feature, but I'm not sure how often it runs.
-"""
-
-if __name__ == "__main__":
-    # Run the agent
-    final_json = extract_facts(dummy_raw_document)
-    
-    # Print the result
-    print("\n--- AGENT 1 OUTPUT (Source of Truth) ---")
-    print(final_json)
     
