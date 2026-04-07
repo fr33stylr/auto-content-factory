@@ -371,7 +371,7 @@ export default function App() {
               {/* THE GLOWING RESTART BUTTON */}
               <button 
                 onClick={handleRestart}
-                className="relative inline-block w-auto transition-transform active:scale-95 drop-shadow-xl cursor-pointer outline-none"
+                className="relative inline-block w-auto transition-transform active:scale-95 drop-shadow-xl cursor-pointer outline-none overflow-visible bg-transparent border-none p-1"
               >
                 <BorderGlow
                   edgeSensitivity={40}
