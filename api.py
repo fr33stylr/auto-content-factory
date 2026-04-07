@@ -5,6 +5,9 @@ import json
 import time
 from google.genai import errors
 
+import os
+import uvicorn
+
 # Import your custom AI agents
 from agent_research import extract_facts
 from agent_copywriter import generate_drafts
@@ -82,3 +85,9 @@ def generate_campaign(request: CampaignRequest):
     except Exception as e:
         print(f"⚠️ SERVER ERROR: {str(e)}")
         return {"status": "error", "message": f"System Error: {str(e)}"}
+    
+if __name__ == "__main__":
+    # Use the PORT environment variable if it exists, otherwise default to 8000
+    port = int(os.environ.get("PORT", 8000))
+    # 'main' should be the name of this file (e.g., if this is main.py, use "main:app")
+    uvicorn.run("api:app", host="0.0.0.0", port=port, reload=False)
