@@ -65,12 +65,14 @@ npm run dev
 ### 📸 Project Overview
 #### 1. The Factory Input
 The core interface for pasting product data and selecting the campaign personality.
-<img width="1800" alt="Input Screen" src="https://www.google.com/search?q=https://via.placeholder.com/1800x900.png%3Ftext%3DInput%2BScreen%2BScreenshot" />
+<img width="1800" alt="Input Screen" src="./assets/Screenshot 2026-04-07 183352.png" />
+
+<img width="1800" alt="Input Screen" src="./assets/Screenshot 2026-04-07 183544.png" />
 
 #### 2. Live Swarm Terminal
 Real-time log feed showing the Researcher, Copywriter, and Editor agents collaborating.
-<img width="1800" alt="Terminal Logs" src="https://www.google.com/search?q=https://via.placeholder.com/1800x900.png%3Ftext%3DTerminal%2BLogs%2BScreenshot" />
+<img width="1800" alt="Terminal Logs" src="./assets/Screenshot 2026-04-07 184139.png" />
 
 #### 3. Campaign Results
 The final, audited marketing assets categorized by platform and ready for use.
-<img width="1800" alt="Results Screen" src="https://www.google.com/search?q=https://via.placeholder.com/1800x900.png%3Ftext%3DResults%2BScreen%2BScreenshot" />
+<img width="1800" alt="Results Screen" src="./assets/Screenshot 2026-04-07 184250.png" />
