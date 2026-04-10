@@ -33,7 +33,7 @@ export default function App() {
     setAppState("INPUT"); // (Or "INPUT" if you want to skip the landing page)
     setSourceText("");
     setChatLogs([]);
-    
+    timerId.forEach(clearTimeout); // Clear any lingering timers from the previous run
     // 3. Turn the boot screen off after 3 seconds (matching your animation!)
     setTimeout(() => {
       setIsBooting(false);
@@ -62,7 +62,9 @@ export default function App() {
     // Push a new log every 2 seconds AND save the timer ID
     fakeMessages.forEach((msg, index) => {
       const timerId = setTimeout(() => {
-        setChatLogs(prev => [...prev, msg]);
+        const exactTime = new Date().toLocaleTimeString();
+
+        setChatLogs(prev => [...prev, {text: msg, timestamp: exactTime}]);
       }, index * 2700);
       
       activeTimeouts.push(timerId); // <--- Save it to our kill list
@@ -336,8 +338,8 @@ export default function App() {
                 {chatLogs.map((log, index) => (
                   <div key={index} className="text-neutral-300 animate-fade-in">
                     {/* Timestamp in dark gray, message in light gray */}
-                    <span className="text-neutral-600 mr-3">{`[${new Date().toLocaleTimeString()}]`}</span>
-                    {log}
+                    <span className="text-neutral-600 mr-3">{log.timestamp}</span>
+                    {log.msg}
                   </div>
                 ))}
                 {/* Adding a blinking cursor effect at the bottom */}
