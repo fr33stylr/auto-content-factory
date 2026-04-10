@@ -339,7 +339,7 @@ export default function App() {
                   <div key={index} className="text-neutral-300 animate-fade-in">
                     {/* Timestamp in dark gray, message in light gray */}
                     <span className="text-neutral-600 mr-3">{log.timestamp}</span>
-                    {log.msg}
+                    {log.text}
                   </div>
                 ))}
                 {/* Adding a blinking cursor effect at the bottom */}
