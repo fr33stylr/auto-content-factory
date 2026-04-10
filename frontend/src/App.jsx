@@ -3,6 +3,7 @@ import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
 import ShinyText from "./ShinyText";
 import BorderGlow from "./BorderGlow";
 import CircularText from "./CircularText";
+import {Copy,Download} from 'lucide-react';
 
 export default function App() {
   const [appState, setAppState] = useState("LANDING"); // Can be "INPUT", "LOADING", or "RESULTS"
@@ -24,6 +25,45 @@ export default function App() {
     }, 2500); // 1.5 seconds feels premium and deliberate
     return () => clearTimeout(timer);
   }, []);
+
+  const handleCopy = async (content, sectionName) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      // Success feedback logic here (e.g., show a toast or change icon state)
+      console.log(`${sectionName} copied to clipboard!`);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  const handleExport = (data, format = 'txt') => {
+  // Combine all segments into one formatted string for the 'Bundle' export
+  const fullContent = `
+  # ${data.title || 'Campaign Output'}
+    
+  ## 📝 Blog Post
+  ${data.blog_post}
+
+  ## 🧵 Social Media Thread
+  ${data.social_thread.map((tweet, index) => `${index + 1}. ${tweet}`).join("\n\n")}
+
+  ## 📧 Email Teaser
+  ${data.email_teaser}
+    `.trim();
+
+    const blob = new Blob([fullContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `campaign-export.${format === 'md' ? 'md' : 'txt'}`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const handleRestart = () => {
     // 1. Instantly trigger the black boot screen overlay
@@ -97,6 +137,21 @@ export default function App() {
       setChatLogs(prev => [...prev, "⚠️ Connection Error. Is your Python server running?"]);
     }
   };
+
+const SectionCopyButton = ({ content, title,onCopy}) => {
+  return (
+    <div className="flex gap-2 mb-2 justify-end">
+      {/* Copy Button (Copies just this specific section) */}
+      <button 
+        onClick={() => onCopy(content, title)}
+        className="p-2 bg-transparent hover:bg-neutral-900 rounded-lg transition-colors group"
+      >
+        <Copy size={18} className="text-white" />
+      </button>
+
+    </div>
+  );
+};
 
   return (
     <div className="relative w-screen h-screen overflow-hidden text-white font-sans flex flex-col items-center justify-center p-6 z-0">
@@ -366,13 +421,23 @@ export default function App() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
               <div>
                 <h1 className="text-4xl font-nippo tracking-wide text-white mb-2 uppercase">Campaign Ready</h1>
+                <div className="flex items-center gap-4">
                 <p className="text-green-400 font-mono text-sm">✅ Cleared by Editor-in-Chief Agent</p>
+                <div className="w-[1.5px] h-4 bg-neutral-700"></div>
+                <button 
+                  onClick={() => handleExport(finalDrafts)}
+                  className="flex items-center gap-2 text-yellow-300 hover:text-white text-sm font-nippo transition-colors group w-fit"
+                >
+                  <Download size={16} className="transition-transform group-hover:-translate-y-1" />
+                  Download
+                </button>
+                </div>
               </div>
               
               {/* CHANGED: Pill-shaped wireframe button to match the rest of the app */}
               {/* THE GLOWING RESTART BUTTON */}
-              <button 
-                onClick={handleRestart}
+              <div 
+                onClick={() => handleRestart()}
                 className="relative inline-block w-auto transition-transform active:scale-95 drop-shadow-xl cursor-pointer outline-none overflow-visible bg-transparent border-none p-1"
               >
                 <BorderGlow
@@ -385,21 +450,27 @@ export default function App() {
                   coneSpread={30}
                   animated={true}
                   colors={['#ffffff', '#93c5fd', '#3b82f6']}
-                  className="w-full h-full pointer-events-none" 
+                  className="w-full h-full" 
                 >
                   {/* Changed from <button> to <div> so we don't have a button inside a button */}
                   <div className="bg-transparent border border-white/40 px-8 py-3 rounded-[50px] font-nippo text-white relative z-10 flex items-center justify-center w-full h-full">
                     Start New Campaign
                   </div>
                 </BorderGlow>
-              </button>
+              </div>
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               
               <div className="bg-transparent border border-white/50 rounded-2xl p-6 shadow-2xl col-span-1 lg:col-span-2">
-                <h2 className="text-xl font-nippo mb-4 border-b border-white/20 pb-2 text-white">Blog Post</h2>
+                <div className="flex items-center justify-between mb-4 border-b border-white/20">
+                <h2 className="text-xl font-nippo mb-4  text-white">Blog Post</h2>
+                <SectionCopyButton
+                  content={finalDrafts.blog_post} 
+                  title="Blog Post"  
+                  onCopy={handleCopy}                   
+                />
+                </div>
                 <div 
                   className="prose prose-invert max-w-none text-neutral-300 space-y-4"
                   dangerouslySetInnerHTML={{ __html: finalDrafts.blog_post }}
@@ -411,15 +482,30 @@ export default function App() {
                 {/* EMAIL PREVIEW */}
                 {/* CHANGED: Transparent wireframe border */}
                 <div className="bg-transparent border border-white/50 rounded-2xl p-6 shadow-2xl">
-                  <h2 className="text-xl font-nippo mb-4 border-b border-white/20 pb-2 text-white">Email Teaser</h2>
+                  <div className="flex items-center justify-between mb-4 border-b border-white/20">
+                  <h2 className="text-xl font-nippo mb-4 text-white">Email Teaser</h2>
+                  <SectionCopyButton
+                    content={finalDrafts.email_teaser}
+                    title="Email Teaser"
+                    onCopy={handleCopy}
+                  />
+                  </div>
                   <p className="text-neutral-300 italic">"{finalDrafts.email_teaser}"</p>
                 </div>
 
                 {/* SOCIAL PREVIEW */}
                 {/* CHANGED: Transparent wireframe border for main box and inner tweets */}
                 <div className="bg-transparent border border-white/50 rounded-2xl p-6 shadow-2xl">
-                  <h2 className="text-xl font-nippo mb-4 border-b border-white/20 pb-2 text-white">Social Thread</h2>
+                  <div className="flex items-center justify-between mb-4 border-b border-white/20">
+                  <h2 className="text-xl font-nippo mb-4 text-white">Social Thread</h2>
+                  <SectionCopyButton
+                    content={finalDrafts.social_thread.join("\n\n")}
+                    title="Social Thread"
+                    onCopy={handleCopy}
+                  />
+                  </div>
                   <div className="space-y-4">
+          
                     {finalDrafts.social_thread.map((tweet, i) => (
                       <div key={i} className="bg-transparent p-4 rounded-xl border border-white/20 text-sm text-neutral-300">
                         {tweet}
