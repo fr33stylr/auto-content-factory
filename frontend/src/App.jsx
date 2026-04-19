@@ -3,7 +3,9 @@ import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
 import ShinyText from "./ShinyText";
 import BorderGlow from "./BorderGlow";
 import CircularText from "./CircularText";
-import {Copy,Download} from 'lucide-react';
+import {Copy,Download,RefreshCw,Pencil,Check} from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import InlineEditor from "./InlineEditor";
 
 export default function App() {
   const [appState, setAppState] = useState("LANDING"); // Can be "INPUT", "LOADING", or "RESULTS"
@@ -18,7 +20,8 @@ export default function App() {
     "Viral & Energetic",
     "Deeply Technical"
   ];
-
+  const [isGlobalEditMode, setIsGlobalEditMode] = useState(false); 
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsBooting(false);
@@ -26,19 +29,42 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleCopy = async (content, sectionName) => {
+  const handleCopy = async (htmlContent, title) => {
     try {
-      await navigator.clipboard.writeText(content);
-      // Success feedback logic here (e.g., show a toast or change icon state)
-      console.log(`${sectionName} copied to clipboard!`);
+      const cleanMarkdown = formatForExport(htmlContent); // Plain text fallback
+
+      // This pushes TRUE Rich Text to the clipboard!
+      if (navigator.clipboard && window.ClipboardItem) {
+        const blobHtml = new Blob([htmlContent], { type: "text/html" });
+        const blobText = new Blob([cleanMarkdown], { type: "text/plain" });
+        
+        const data = [new ClipboardItem({
+          "text/plain": blobText,
+          "text/html": blobHtml,
+        })];
+        
+        await navigator.clipboard.write(data);
+      } else {
+        await navigator.clipboard.writeText(cleanMarkdown); // Fallback
+      }
+      
+      alert(`${title} copied to clipboard!`); 
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      console.error("Copy failed", err);
+      alert("Failed to copy content.");
     }
   };
 
+  const handleManualEdit = (section, newText) => {
+  setFinalDrafts(prev => ({
+    ...prev,
+    [section]: newText
+  }));
+};
+
   const handleExport = (data, format = 'txt') => {
   // Combine all segments into one formatted string for the 'Bundle' export
-  const fullContent = `
+  const fullContent = formatForExport(`
   # ${data.title || 'Campaign Output'}
     
   ## 📝 Blog Post
@@ -49,7 +75,7 @@ export default function App() {
 
   ## 📧 Email Teaser
   ${data.email_teaser}
-    `.trim();
+    `.trim());
 
     const blob = new Blob([fullContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -65,19 +91,41 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+
   const handleRestart = () => {
-    // 1. Instantly trigger the black boot screen overlay
     setIsBooting(true);
 
-    // 2. Reset all your data silently behind the black screen
-    setAppState("INPUT"); // (Or "INPUT" if you want to skip the landing page)
+    setAppState("INPUT");
     setSourceText("");
     setChatLogs([]);
-    timerId.forEach(clearTimeout); // Clear any lingering timers from the previous run
-    // 3. Turn the boot screen off after 3 seconds (matching your animation!)
     setTimeout(() => {
       setIsBooting(false);
-    }, 5000); 
+    }, 4000); 
+  };
+  
+  // 📝 Helper to update a specific item in an array (like Tweet #2)
+  const handleArrayEdit = (sectionName, index, newText) => {
+    setFinalDrafts(prev => {
+      const updatedArray = [...prev[sectionName]]; // Make a copy of the array
+      updatedArray[index] = newText; // Update the specific tweet
+      return { ...prev, [sectionName]: updatedArray }; // Save it back to state
+    });
+  };
+
+  // 🧪 DEV MODE: Skip the API and go straight to results
+  const jumpToResults = () => {
+    // 1. Inject fake data so the page doesn't crash looking for empty variables
+    setFinalDrafts({
+      blog_post: "## Dev Mode Active\nThis is a fake blog post so we can test the UI without waiting for the AI. You can edit this text right now!",
+      social_thread: [
+        "1/ Here is the first fake tweet of the thread. 🚀",
+        "2/ Here is the second fake tweet! 🧵"
+      ],
+      email_teaser: "Excited to announce that I bypassed the loading screen. 👇\n\n#Developer #Productivity"
+    });
+
+    // 2. Instantly change the page
+    setAppState("RESULTS");
   };
 
   const startFactory = async () => {
@@ -112,7 +160,7 @@ export default function App() {
 
     // 2. THE REAL AI CALL
     try {
-      const response = await fetch("https://auto-content-factory.onrender.com/generate", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source_text: sourceText, tone: tone }),
@@ -138,7 +186,7 @@ export default function App() {
     }
   };
 
-const SectionCopyButton = ({ content, title,onCopy}) => {
+const SectionCopyButton = ({ content, title, onCopy}) => {
   return (
     <div className="flex gap-2 mb-2 justify-end">
       {/* Copy Button (Copies just this specific section) */}
@@ -152,6 +200,21 @@ const SectionCopyButton = ({ content, title,onCopy}) => {
     </div>
   );
 };
+
+const formatForExport = (htmlString) => {
+    if (!htmlString) return "";
+    return htmlString
+      .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+      .replace(/<b>(.*?)<\/b>/gi, '**$1**')
+      .replace(/<em>(.*?)<\/em>/gi, '_$1_')
+      .replace(/<i>(.*?)<\/i>/gi, '_$1_')
+      .replace(/<s>(.*?)<\/s>/gi, '~~$1~~')
+      .replace(/<\/(p|div|h[1-6])>/gi, '\n\n') 
+      .replace(/<br\s*\/?>/gi, '\n')           
+      .replace(/<[^>]*>?/gm, '') // Strip remaining layout tags
+      .replace(/&nbsp;/g, ' ')                 
+      .trim();
+  };
 
   return (
     <div className="relative w-screen h-screen overflow-hidden text-white font-sans flex flex-col items-center justify-center p-6 z-0">
@@ -354,6 +417,12 @@ const SectionCopyButton = ({ content, title,onCopy}) => {
               >
                 Create
               </button>
+              <button 
+    onClick={jumpToResults}
+    className="text-neutral-500 hover:text-white underline text-sm transition-colors"
+  >
+    [Dev Mode: Skip to Results]
+  </button>
             </div>
           </BorderGlow>
           
@@ -420,16 +489,26 @@ const SectionCopyButton = ({ content, title,onCopy}) => {
             {/* THE HEADER */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
               <div>
-                <h1 className="text-4xl font-nippo tracking-wide text-white mb-2 uppercase">Campaign Ready</h1>
+                <h1 className="text-4xl font-nippo tracking-wide text-white mb-2 uppercase">Campaign Ready !</h1>
                 <div className="flex items-center gap-4">
-                <p className="text-green-400 font-mono text-sm">✅ Cleared by Editor-in-Chief Agent</p>
-                <div className="w-[1.5px] h-4 bg-neutral-700"></div>
+                
                 <button 
                   onClick={() => handleExport(finalDrafts)}
                   className="flex items-center gap-2 text-yellow-300 hover:text-white text-sm font-nippo transition-colors group w-fit"
                 >
                   <Download size={16} className="transition-transform group-hover:-translate-y-1" />
                   Download
+                </button>
+                <div className="w-[1.5px] h-4 bg-neutral-700"></div>
+                <button
+                  onClick={() => setIsGlobalEditMode(!isGlobalEditMode)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md font-bold transition-all text-sm ${
+                  isGlobalEditMode 
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30' 
+                  : 'text-neutral-400 hover:text-white border border-neutral-700 hover:bg-neutral-800'
+                  }`}
+                  >
+                  {isGlobalEditMode ? <><Check size={14} /> Save Edits</> : <><Pencil size={14} /> Edit Layout</>}
                 </button>
                 </div>
               </div>
@@ -471,12 +550,12 @@ const SectionCopyButton = ({ content, title,onCopy}) => {
                   onCopy={handleCopy}                   
                 />
                 </div>
-                <div 
-                  className="prose prose-invert max-w-none text-neutral-300 space-y-4"
-                  dangerouslySetInnerHTML={{ __html: finalDrafts.blog_post }}
-                />
+                <InlineEditor
+                  initialContent={finalDrafts.blog_post}
+                  onContentChange={(newText) => handleManualEdit('blog_post', newText)}
+                  isEditing={isGlobalEditMode}
+                />      
               </div>
-
               <div className="flex flex-col gap-6">
                 
                 {/* EMAIL PREVIEW */}
@@ -490,27 +569,39 @@ const SectionCopyButton = ({ content, title,onCopy}) => {
                     onCopy={handleCopy}
                   />
                   </div>
-                  <p className="text-neutral-300 italic">"{finalDrafts.email_teaser}"</p>
+                  <InlineEditor
+                    initialContent={finalDrafts.email_teaser}
+                    onContentChange={(newText) => handleManualEdit('email_teaser', newText)}
+                    isEditing={isGlobalEditMode}
+                  />
                 </div>
 
                 {/* SOCIAL PREVIEW */}
-                {/* CHANGED: Transparent wireframe border for main box and inner tweets */}
                 <div className="bg-transparent border border-white/50 rounded-2xl p-6 shadow-2xl">
                   <div className="flex items-center justify-between mb-4 border-b border-white/20">
                   <h2 className="text-xl font-nippo mb-4 text-white">Social Thread</h2>
                   <SectionCopyButton
-                    content={finalDrafts.social_thread.join("\n\n")}
+                    content={(finalDrafts.social_thread || []).join("\n\n")}
                     title="Social Thread"
                     onCopy={handleCopy}
                   />
                   </div>
                   <div className="space-y-4">
           
-                    {finalDrafts.social_thread.map((tweet, i) => (
-                      <div key={i} className="bg-transparent p-4 rounded-xl border border-white/20 text-sm text-neutral-300">
-                        {tweet}
-                      </div>
-                    ))}
+                    {finalDrafts.social_thread.map((tweet, i) => {
+                      if(!tweet.trim()) return null; // Skip empty tweets
+                      return (
+                        <TweetCard 
+                          key={i} 
+                          index={i}
+                          totalTweets={finalDrafts.social_thread.length} 
+                          tweetText={tweet} 
+                          onCopy={handleCopy} 
+                          isEditing={isGlobalEditMode}
+                          onEdit={(newText) => handleArrayEdit('social_thread', i, newText)}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
                 
@@ -526,3 +617,32 @@ const SectionCopyButton = ({ content, title,onCopy}) => {
     </div>
   );
 }
+
+const TweetCard = ({ tweetText, index,totalTweets, onCopy,isEditing, onEdit }) => {
+  return (
+    <div className="bg-black border border-neutral-800 p-4 rounded-lg mb-3">
+      <div className="flex justify-between items-start mb-2">
+        <span className="text-blue-400 font-mono text-sm">Post {index + 1}/{totalTweets}</span>
+        
+        {/* Granular Action Buttons */}
+        <div className="flex gap-2">
+          
+          <button 
+            onClick={() => onCopy(tweetText, `Tweet ${index + 1}`)}
+            className="text-neutral-500 hover:text-white transition-colors"
+            title="Copy this post"
+          >
+            <Copy size={14} />
+          </button>
+        </div>
+      </div>
+      
+      {/* The Tweet Content */}
+      <InlineEditor
+        initialContent={tweetText}
+        onContentChange={onEdit}
+        isEditing={isEditing}
+      />
+    </div>
+  );
+};
