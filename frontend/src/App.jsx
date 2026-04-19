@@ -417,7 +417,6 @@ const formatForExport = (htmlString) => {
               >
                 Create
               </button>
-              
             </div>
           </BorderGlow>
           
