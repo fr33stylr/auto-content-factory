@@ -417,12 +417,7 @@ const formatForExport = (htmlString) => {
               >
                 Create
               </button>
-              <button 
-    onClick={jumpToResults}
-    className="text-neutral-500 hover:text-white underline text-sm transition-colors"
-  >
-    [Dev Mode: Skip to Results]
-  </button>
+              
             </div>
           </BorderGlow>
           
